@@ -12,6 +12,12 @@ WriteMakefile(
 	PREREQ_PM     => {
 		'SOAP::Lite' => 0,
 		'XML::LibXML' => 0,
+		'Crypt::SSLeay' => 0,
+		'MIME::Lite' => 0,
+		'XML::LibXML' => 0,
+		'File::Find::Rule' => 0,
+		'Test::Class' => 0,
+		'Test::MockObject' => 0
 	},
 	dist          => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
 	clean         => { FILES => 'WebService-Autotask-*' },

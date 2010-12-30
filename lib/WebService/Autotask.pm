@@ -7,7 +7,7 @@ use XML::LibXML;
 use Scalar::Util qw(blessed);
 
 use vars qw($VERSION);
-$VERSION = '1.000';
+$VERSION = '1.001';
 
 my @VALID_OPS = qw(
 	Equals NotEqual GreaterThan LessThan GreaterThanOrEquals LessThanOrEquals 
@@ -151,7 +151,9 @@ sub new {
 Generic query method to query the Autotask system for entity data. This takes
 a hash ref as its argument. If an error occurs while trying to parse the given
 arguments or creating the associated QueryXML query this method will die with
-an appropriate error. The following keys are allowed:
+an appropriate error. Returns either the single matching entry as a hash 
+reference, or an array of hash references when more than one result is returned.
+The following keys are allowed:
 
 =over 4
 
@@ -394,7 +396,7 @@ sub _load_entity_field_info {
 
 	# Now load the user derfined fields.
 	$res = $soap->getUDFInfo(SOAP::Data->name('psTable')->value($entity))->result;
-	if ($res && ref($res) eq 'HASH' && exists($res->{Field})) {
+	if ($res && ref($res) eq 'HASH' && exists($res->{Field}) && ref($res->{Field}) eq 'ARRAY') {
 		foreach my $field (@{$res->{Field}}) {
 			$self->{valid_entities}->{$entity}->{fields}->{$field->{Name}} = $field;
 			$self->{valid_entities}->{$entity}->{fields}->{$field->{Name}}->{IsUDF} = 'true';

@@ -1,4 +1,7 @@
 Revision History for WebService::Autotask
 
+1.001 Thu, 29 January 2010 13:56:00 -0400 derek
+		Bug fixes - Thanks Stefan Adams
+
 1.000	Mon, 22 January 2010 11:00:00 -0400 derek
 		First release to CPAN.
