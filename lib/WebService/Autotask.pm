@@ -7,7 +7,7 @@ use XML::LibXML;
 use Scalar::Util qw(blessed);
 
 use vars qw($VERSION);
-$VERSION = '1.001';
+$VERSION = '1.002';
 
 my @VALID_OPS = qw(
 	Equals NotEqual GreaterThan LessThan GreaterThanOrEquals LessThanOrEquals 
