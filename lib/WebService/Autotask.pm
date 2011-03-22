@@ -7,7 +7,7 @@ use XML::LibXML;
 use Scalar::Util qw(blessed);
 
 use vars qw($VERSION);
-$VERSION = '1.002';
+$VERSION = '1.003';
 
 my @VALID_OPS = qw(
 	Equals NotEqual GreaterThan LessThan GreaterThanOrEquals LessThanOrEquals 
@@ -360,7 +360,7 @@ sub _parse_field {
 		if (!$self->{valid_entities}->{$entity}->{fields}->{$field->{name}}->{IsQueryable});
 	my $f_elem = $doc->createElement('field');
 	if ($self->{valid_entities}->{$entity}->{fields}->{$field->{name}}->{IsUDF}) {
-		$f_elem->setAttrbute('udf', 'true');
+		$f_elem->setAttribute('udf', 'true');
 	}
 	$f_elem->appendChild($doc->createTextNode($field->{name}));
 
