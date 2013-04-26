@@ -5,9 +5,10 @@ use warnings;
 use SOAP::Lite;
 use XML::LibXML;
 use Scalar::Util qw(blessed);
+use MIME::Base64;
 
 use vars qw($VERSION);
-$VERSION = '1.003';
+$VERSION = '1.1';
 
 my @VALID_OPS = qw(
 	Equals NotEqual GreaterThan LessThan GreaterThanOrEquals LessThanOrEquals 
@@ -90,7 +91,7 @@ sub new {
 	my ($package, $args, $proxies) = @_;
 
 	# Set a default proxy to use.
-	$args->{proxy} = 'https://webservices.autotask.net/ATServices/1.4/atws.asmx' if (!exists($args->{proxy}));
+	$args->{proxy} = 'https://webservices.autotask.net/atservices/1.5/atws.asmx' if (!exists($args->{proxy}));
 	die "No username provided in call to new()" if (!$args->{username});
 	die "No password provided in call to new()" if (!$args->{password});
 
@@ -104,7 +105,7 @@ sub new {
 	$proxies = {};
 
 	my $soap = SOAP::Lite
-		->uri('http://autotask.net/ATWS/v1_4/')
+		->uri('http://autotask.net/ATWS/v1_5/')
 		->on_action(sub { return join('', @_)})
 		->proxy($args->{proxy},
 			credentials => [
@@ -550,6 +551,77 @@ sub get_picklist_options {
 	return %{$self->{picklist_values}->{$entity}->{$field}};
 }
 
+=head2 create_attachment($attach)
+
+Create a new attachment. Takes a hashref containing Data (the raw data of
+the attachment) and Info, which contains the AttachmentInfo. Returns the
+new attachment ID on success.
+
+=cut
+
+sub create_attachment {
+	my ($self, $attach) = @_;
+
+	# Get the entity information if we don't already have it.
+	my $atb = "Attachment";
+	my $ati = $atb . "Info";
+	$self->_load_entity_field_info($ati);
+
+	# Collect the Info fields
+	my $e_info = $self->{valid_entities}->{$ati};
+	my @inf;
+	foreach my $f_name (keys %{$$attach{Info}}) {
+		die "Field $f_name is not a valid field for $ati"
+			if (!$e_info->{fields}->{$f_name});
+		push @inf, SOAP::Data->name($f_name => $$attach{Info}{$f_name});
+	}
+
+	my $res = $self->{at_soap}->CreateAttachment(
+	    SOAP::Data->name("attachment" => \SOAP::Data->value(
+		SOAP::Data->name(Info => \SOAP::Data->value(@inf))->attr({'xsi:type' => $ati}),
+		SOAP::Data->name('Data')->value($$attach{Data})->type('base64Binary'),
+	    ))->attr({'xsi:type' => $atb})); 
+	return $res->valueof('//CreateAttachmentResponse/CreateAttachmentResult');
+}
+
+=head2 get_attachment($id)
+
+Fetch an attachment; the only argument is the attachment ID. Returns a
+hashref of attachment Data and Info, or undef if the specified attachment
+doesn't exist or if there is an error.
+
+=cut
+
+sub get_attachment {
+	my ($self, $id) = @_;
+
+	# The result is either a hashref with Data and Info or undef
+	my $res = $self->{at_soap}->GetAttachment(SOAP::Data->name('attachmentId')->value($id))->result;
+	if ($res && %$res && $$res{Data}) {
+		# Go ahead and decode it
+		$$res{Data} = decode_base64($$res{Data});
+	}
+	return $res;
+}
+
+=head2 delete_attachment($id)
+
+Delete an attachment; the only argument is the attachment ID. Returns true on
+success or sets the error string on failure.
+
+=cut
+
+sub delete_attachment {
+	my ($self, $id) = @_;
+
+	my $res = $self->{at_soap}->DeleteAttachment(SOAP::Data->name('attachmentId')->value($id))->result;
+	if ($res) {
+		$self->_set_error($res);
+		return 0;
+	}
+	return 1;
+}
+
 =head1 ENTITY FORMAT
 
 The follow section details how to format a variable that contains entity
@@ -729,9 +801,13 @@ L<SOAP::Lite>
 
 Derek Wueppelmann (derek@roaringpenguin.com)
 
+Attachment support added by Chris Adams (cmadams@hiwaay.net)
+
 =head1 LICENSE AND COPYRIGHT
 
 Copyright (c) 2010 Roaring Penguin Software, Inc.
+
+Attachment support Copyright (c) 2013 HiWAAY Information Services, Inc.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

@@ -1,5 +1,9 @@
 Revision History for WebService::Autotask
 
+1.1   Thu, 25 April 2013 16:11:00 -0500 cmadams
+		Switch from Autotask API 1.4 to 1.5
+		Add support for attachments
+
 1.003 Fri, 22 March 2011 16:17:00 -0500 derek
 		getAttribute method call was typoed. Fixed now.
 

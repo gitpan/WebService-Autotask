@@ -1,10 +1,11 @@
 --- #YAML:1.0
 name:               WebService-Autotask
-version:            1.003
+version:            1.1
 abstract:           Interface to the Autotask webservices API.
 author:
     - Derek Wueppelmann <derek@roaringpenguin.com>
-license:            unknown
+    - Chris Adams <cmadams@hiwaay.net>
+license:            perl
 distribution_type:  module
 configure_requires:
     ExtUtils::MakeMaker:  0
@@ -13,6 +14,7 @@ build_requires:
 requires:
     Crypt::SSLeay:     0
     File::Find::Rule:  0
+    MIME::Base64:      0
     MIME::Lite:        0
     SOAP::Lite:        0
     Test::Class:       0

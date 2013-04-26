@@ -27,9 +27,11 @@ DEPENDENCIES
 
 AUTHOR
     Derek Wueppelmann (derek@roaringpenguin.com)
+    Attachment support added by Chris Adams (cmadams@hiwaay.net)
 
 LICENSE AND COPYRIGHT
     Copyright (c) 2010 Roaring Penguin Software, Inc.
+    Attachment support Copyright (c) 2013 HiWAAY Information Services, Inc.
 
     This program is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself.
