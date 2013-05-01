@@ -6,6 +6,7 @@ use SOAP::Lite;
 use XML::LibXML;
 use Scalar::Util qw(blessed);
 use MIME::Base64;
+use Encode;
 
 use vars qw($VERSION);
 $VERSION = '1.1';
@@ -58,6 +59,8 @@ WebService::Autotask - Interface to the Autotask webservices API.
 API. Using this method and your Autotask login credentials you can access and
 manage your Autotask items using this interface. You should read the Autotask
 API documentation prior to using this module.
+
+Note: all input is assumed to be UTF-8.
 
 =head1 CONSTRUCTOR 
 
@@ -576,10 +579,11 @@ sub create_attachment {
 		push @inf, SOAP::Data->name($f_name => $$attach{Info}{$f_name});
 	}
 
+	my $data = decode("utf8", $$attach{Data});
 	my $res = $self->{at_soap}->CreateAttachment(
 	    SOAP::Data->name("attachment" => \SOAP::Data->value(
 		SOAP::Data->name(Info => \SOAP::Data->value(@inf))->attr({'xsi:type' => $ati}),
-		SOAP::Data->name('Data')->value($$attach{Data})->type('base64Binary'),
+		SOAP::Data->name('Data')->value($data)->type('base64Binary'),
 	    ))->attr({'xsi:type' => $atb})); 
 	return $res->valueof('//CreateAttachmentResponse/CreateAttachmentResult');
 }
@@ -682,12 +686,17 @@ sub _entity_as_soap_data {
 	my @fields = ();
 	
 	foreach my $f_name (sort(keys(%$entity))) {
+		my $field;
 		if ($f_name eq 'UserDefinedFields') {
-			push(@fields, _udf_as_soap_data($entity->{$f_name}));
-			next;
+			$field = _udf_as_soap_data($entity->{$f_name});
+		} else {
+			# Assume non-ASCII is UTF-8
+			my $data = decode("utf8", $entity->{$f_name});
+			$field = SOAP::Data->name($f_name => $data);
+			# SOAP::Lite will treat as binary if UTF-8
+			$field->type("string") if ($data ne $entity->{$f_name});
 		}
-
-		push(@fields, SOAP::Data->name($f_name => $entity->{$f_name}));
+		push @fields, $field;
 	}
 	
 	return SOAP::Data->name(Entity => \SOAP::Data->value(@fields))->attr({'xsi:type' => ref($entity)});
@@ -699,9 +708,12 @@ sub _udf_as_soap_data {
 	my @fields = ();
 
 	foreach my $field (@{$udfs->{UserDefinedField}}) {
-		push(@fields, SOAP::Data->name(
-			UserDefinedField => SOAP::Data->value($field)
-		));
+		# Assume non-ASCII is UTF-8
+		my $data = decode("utf8", $field);
+		my $val = SOAP::Data->value($data);
+		# SOAP::Lite will treat as binary if UTF-8
+		$data->type("string") if ($data ne $field);
+		push(@fields, SOAP::Data->name(UserDefinedField => $val));
 	}
 
 	return SOAP::Data->name(UserDefinedFields => \SOAP::Data->value(@fields));
@@ -795,19 +807,19 @@ sub _validate_fields {
 
 =head1 DEPENDENCIES
 
-L<SOAP::Lite>
+L<SOAP::Lite>, L<MIME::Base64>
 
 =head1 AUTHOR
 
 Derek Wueppelmann (derek@roaringpenguin.com)
 
-Attachment support added by Chris Adams (cmadams@hiwaay.net)
+Attachment, UTF-8 support added by Chris Adams (cmadams@hiwaay.net)
 
 =head1 LICENSE AND COPYRIGHT
 
 Copyright (c) 2010 Roaring Penguin Software, Inc.
 
-Attachment support Copyright (c) 2013 HiWAAY Information Services, Inc.
+Attachment, UTF-8 support Copyright (c) 2013 HiWAAY Information Services, Inc.
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
